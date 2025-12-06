@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>NAVI&HUI LENORMAND</title>
+<style>
+  :root{
+    --bg:#f6efff;
+    --card:#ffffff;
+    --ink:#2b1560;
+    --shadow:rgba(0,0,0,.12);
+    --pill:#ffffff;
+    --pill-on:#dff3ff;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    font-family:ui-sans-serif,system-ui,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+    color:var(--ink);
+  }
+  .wrap{
+    max-width:960px;
+    margin:0 auto;
+    padding:20px;
+  }
+  h1{
+    margin:8px 0 18px;
+    text-align:center;
+    font-size:34px;
+    font-weight:800;
+  }
+
+  .toolbar{
+    background:var(--pill);
+    border-radius:18px;
+    box-shadow:0 6px 20px var(--shadow);
+    padding:14px 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    align-items:center;
+    justify-content:center;
+  }
+  .qbox{
+    flex:1 1 260px;
+    display:flex;
+    gap:8px;
+    align-items:center;
+    font-size:14px;
+  }
+  .qbox input[type="text"]{
+    flex:1;
+    padding:10px 12px;
+    border:1px solid #ded6f8;
+    border-radius:12px;
+    background:#fff;
+  }
+  .center-opt{
+    display:flex;
+    align-items:center;
+    font-size:12px;
+    gap:4px;
+  }
+  .center-opt select{
+    padding:4px 6px;
+    border-radius:10px;
+    border:1px solid #ded6f8;
+    background:#fff;
+    font-size:12px;
+  }
+  .btn{
+    border:0;
+    padding:10px 16px;
+    border-radius:14px;
+    background:#fff;
+    box-shadow:0 3px 12px var(--shadow);
+    cursor:pointer;
+    font-weight:700;
+    font-size:14px;
+  }
+  .btn.on{background:var(--pill-on);}
+
+  /* 🔄 초기화 버튼만 살짝 다른 색으로 */
+  .btn-reset{
+    background:#ffeef3;
+    border:1px solid #ffc4d8;
+  }
+
+  #stage{
+    margin-top:18px;
+    background:#fff;
+    border-radius:16px;
+    box-shadow:0 6px 18px var(--shadow);
+    padding:16px;
+  }
+
+  /* 카드 공통 */
+  .item{text-align:center;cursor:pointer;}
+  .card{
+    width:120px;
+    aspect-ratio:3/4;
+    background:var(--card);
+    border-radius:16px;
+    box-shadow:0 4px 14px var(--shadow);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin:0 auto;
+  }
+  .card img{
+    width:92%;
+    height:auto;
+    border-radius:10px;
+  }
+  .caption{
+    margin-top:6px;
+    font-size:13px;
+    line-height:1.15;
+  }
+  .muted{opacity:.7;}
+  .tone{
+    display:inline-block;
+    margin-top:4px;
+    padding:3px 8px;
+    border-radius:999px;
+    font-size:12px;
+  }
+  .tone.pos{background:#e8f2ff;}
+  .tone.neu{background:#e7ffe8;}
+  .tone.neg{background:#ffe7e7;}
+
+  /* 1/2/3카드: 가로 줄 */
+  .row{
+    display:flex;
+    gap:14px;
+    justify-content:center;
+    align-items:flex-start;
+    flex-wrap:wrap;
+  }
+
+  /* 5카드 */
+  .spread-5{
+    display:flex;
+    gap:8px;
+    justify-content:space-between;
+    align-items:flex-start;
+    flex-wrap:nowrap;
+  }
+
+  /* 십자 스프레드 */
+  .cross{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:12px;
+    max-width:640px;
+    margin:0 auto;
+  }
+  .cross .card{width:100%;max-width:150px;}
+
+  /* 3x3 9카드 */
+  .grid3x3{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:10px;
+    max-width:640px;
+    margin:0 auto;
+    justify-items:center;
+  }
+
+  .box{
+    margin-top:14px;
+    padding:12px;
+    border:1px dashed #d7cfff;
+    border-radius:12px;
+    background:#fbf9ff;
+  }
+  .small{font-size:12px;line-height:1.35;}
+  .list{margin:6px 0 0 0;padding-left:18px;}
+
+  /* 모바일 최적화 */
+  @media (max-width:768px){
+    .wrap{padding:16px;}
+    h1{font-size:28px;}
+    .card{width:100px;}
+    .cross .card{max-width:140px;}
+
+    .spread-5 .card{
+      width:17vw;
+      max-width:none;
+    }
+    .spread-5 .caption{
+      font-size:11px;
+    }
+  }
+  @media (max-width:480px){
+    .card{width:90px;}
+    .cross .card{max-width:120px;}
+    .spread-5 .card{width:16vw;}
+  }
+</style>
+</head>
+<body>
+
+<!-- 🔐 비밀번호 입력 화면 -->
+<div id="lock-screen" style="min-height:100vh;display:flex;align-items:center;justify-content:center;">
+  <div style="background:#ffffff;border-radius:18px;box-shadow:0 8px 24px rgba(0,0,0,.16);padding:24px 20px;max-width:320px;width:90%;text-align:center;">
+    <h2 style="margin:0 0 12px;font-size:20px;font-weight:800;color:#2b1560;">NAVI&amp;HUI LENORMAND</h2>
+    <p style="margin:0 0 16px;font-size:14px;color:#555;">접속 비밀번호를 입력해 주세요.</p>
+    <input id="pw-input" type="password" placeholder="비밀번호"
+           style="width:100%;padding:10px 12px;border:1px solid #ded6f8;border-radius:10px;margin-bottom:12px;">
+    <button id="pw-btn"
+            style="width:100%;padding:10px 0;border:0;border-radius:10px;background:#7c5cff;color:#fff;font-weight:700;cursor:pointer;">
+      입장하기
+    </button>
+    <p id="pw-error" style="margin-top:8px;font-size:12px;color:#d60000;display:none;">비밀번호가 틀렸습니다.</p>
+  </div>
+</div>
+
+<!-- 🔒 실제 페이지 내용 (비밀번호 통과 후에만 보이게) -->
+<div id="app" style="display:none;">
+  <div class="wrap">
+    <h1>NAVI&HUI LENORMAND</h1>
+
+    <div class="toolbar">
+      <div class="qbox">
+        <label><input id="useQ" type="checkbox" /> 질문 입력</label>
+        <input id="qtext" type="text" placeholder="질문을 적어 주세요" />
+      </div>
+
+      <!-- 중앙 카드 선택 -->
+      <div class="center-opt">
+        <span>중앙카드</span>
+        <select id="center-select">
+          <option value="">랜덤</option>
+          <!-- JS에서 카드 목록으로 자동 채워짐 -->
+        </select>
+      </div>
+
+      <button class="btn" onclick="drawN(1,this)">1카드</button>
+      <button class="btn" onclick="drawN(2,this)">2카드</button>
+      <button class="btn" onclick="drawN(3,this)">3카드</button>
+      <button class="btn" onclick="drawN(5,this)">5카드</button>
+      <button class="btn" onclick="drawCross(this)">+ 십자</button>
+      <button class="btn" onclick="draw3x3(this)">9카드(3x3)</button>
+      <!-- 🔄 초기화 버튼 (색만 다르게) -->
+      <button class="btn btn-reset" onclick="resetAll()">초기화</button>
+    </div>
+
+    <div id="stage"></div>
+  </div>
+</div>
+
+<script>
+/* 🖱 오른쪽 클릭(컨텍스트 메뉴) 방지 */
+document.addEventListener("contextmenu", function(e){
+  e.preventDefault();
+});
+
+/* ===== 카드 데이터 ===== */
+const CARDS = [
+  {num:1, code:"Rider",   kr:"기수",   key:"소식•이동",   add:"빠른 변화·연락 도착", type:"neutral"},
+  {num:2, code:"Clover",  kr:"클로버", key:"행운•기회",   add:"짧은 찬스·시도 좋음", type:"negative"},
+  {num:3, code:"Ship",    kr:"선박",   key:"여행•확장",   add:"관계·환경 변화",     type:"neutral"},
+  {num:4, code:"House",   kr:"집",     key:"가정•안정",   add:"기반 다지기",       type:"neutral"},
+  {num:5, code:"Tree",    kr:"나무",   key:"건강•성장",   add:"장기 성장·회복",     type:"neutral"},
+  {num:6, code:"Cloud",   kr:"구름",   key:"혼란•불확실", add:"판단 보류·챙기기",   type:"positive"},
+  {num:7, code:"Snake",   kr:"뱀",     key:"유혹•기만",   add:"겉과속 다름·주의",   type:"positive"},
+  {num:8, code:"Coffin",  kr:"관",     key:"끝•전환",     add:"정리·재출발",       type:"positive"},
+  {num:9, code:"Bouquet", kr:"부케",   key:"선물•기쁨",   add:"호의 상승",         type:"negative"},
+  {num:10,code:"Scythe",  kr:"낫",     key:"단절•결정",   add:"빠른 선택",         type:"positive"},
+  {num:11,code:"Whip",    kr:"채찍",   key:"갈등•반복",   add:"루프 끊기",         type:"positive"},
+  {num:12,code:"Bird",    kr:"새",     key:"대화•소문",   add:"말 많은 시기",       type:"neutral"},
+  {num:13,code:"Child",   kr:"아이",   key:"새 시작•순수", add:"작지만 성장 큼",     type:"negative"},
+  {num:14,code:"Fox",     kr:"여우",   key:"일•의심",     add:"계약·정보 재확인",   type:"neutral"},
+  {num:15,code:"Bear",    kr:"곰",     key:"힘•보호",     add:"후원·리더십",       type:"neutral"},
+  {num:16,code:"Stars",   kr:"별",     key:"희망•목표",   add:"비전 명확",         type:"negative"},
+  {num:17,code:"Stork",   kr:"황새",   key:"변화•개선",   add:"습관 업데이트",     type:"neutral"},
+  {num:18,code:"Dog",     kr:"개",     key:"신뢰•우정",   add:"동맹·파트너십",     type:"negative"},
+  {num:19,code:"Tower",   kr:"탑",     key:"제도•독립",   add:"홀로서기",         type:"neutral"},
+  {num:20,code:"Garden",  kr:"정원",   key:"모임•공개",   add:"좋은 평판",         type:"neutral"},
+  {num:21,code:"Mountain",kr:"산",     key:"장애•지연",   add:"시간 필요",         type:"positive"},
+  {num:22,code:"Crossroad",kr:"갈림길",key:"선택•결정",   add:"데이터 비교",       type:"neutral"},
+  {num:23,code:"Mice",    kr:"쥐",     key:"손실•소모",   add:"미세누수 점검",     type:"positive"},
+  {num:24,code:"Heart",   kr:"하트",   key:"사랑•감정",   add:"감정 회복",         type:"negative"},
+  {num:25,code:"Ring",    kr:"반지",   key:"계약•순환",   add:"장기 커밋",         type:"negative"},
+  {num:26,code:"Book",    kr:"책",     key:"비밀•학습",   add:"정보 미공개",       type:"neutral"},
+  {num:27,code:"Letter",  kr:"편지",   key:"연락•문서",   add:"증거·통보",         type:"neutral"},
+  {num:28,code:"Man",     kr:"남성",   key:"핵심 인물",   add:"중심 남성",         type:"neutral"},
+  {num:29,code:"Woman",   kr:"여성",   key:"핵심 인물",   add:"중심 여성",         type:"neutral"},
+  {num:30,code:"Lily",    kr:"백합",   key:"평화•성숙",   add:"휴식·품위",         type:"neutral"},
+  {num:31,code:"Sun",     kr:"태양",   key:"성공•활력",   add:"긍정 결과",         type:"negative"},
+  {num:32,code:"Moon",    kr:"달",     key:"명예•감정",   add:"감정 리듬",         type:"negatvie"},
+  {num:33,code:"Key",     kr:"열쇠",   key:"해결•정답",   add:"돌파구",           type:"negative"},
+  {num:34,code:"Fish",    kr:"물고기", key:"재물•교류",   add:"거래 증가",         type:"negative"},
+  {num:35,code:"Anchor",  kr:"닻",     key:"안정•고정",   add:"지속성",           type:"negative"},
+  {num:36,code:"Cross",   kr:"십자가", key:"고난•신념",   add:"책임·버티기",       type:"positive"},
+];
+
+/* 중앙 카드 선택 셀렉트 초기화 */
+function initCenterSelect(){
+  const sel = document.getElementById("center-select");
+  if(!sel) return;
+  CARDS.forEach(c=>{
+    const opt = document.createElement("option");
+    opt.value = String(c.num);
+    opt.textContent = `${c.num}. ${c.code}`;
+    sel.appendChild(opt);
+  });
+}
+
+document.addEventListener("DOMContentLoaded", initCenterSelect);
+
+/* 이미지 로딩 (레노먼드-01.png 등 자동 시도) */
+const IMG_DIR_CANDIDATES = ["","cards/","images/","img/"];
+const IMG_EXT_CANDIDATES = [".png",".webp",".jpg",".PNG",".JPG"];
+const pad2 = n => String(n).padStart(2,"0");
+
+function makeImg(num){
+  const img = document.createElement("img");
+  img.dataset.num = num;
+  img.dataset.try = 0;
+  img.src = encodeURI(`레노먼드-${pad2(num)}.png`);
+  img.onerror = function(){ tryNextImg(this); };
+  return img;
+}
+function tryNextImg(img){
+  let t = +img.dataset.try;
+  const num = img.dataset.num;
+  const total = IMG_DIR_CANDIDATES.length * IMG_EXT_CANDIDATES.length;
+  if(t >= total){ img.onerror = null; return; }
+  const dir = IMG_DIR_CANDIDATES[Math.floor(t / IMG_EXT_CANDIDATES.length)];
+  const ext = IMG_EXT_CANDIDATES[t % IMG_EXT_CANDIDATES.length];
+  img.dataset.try = t + 1;
+  img.src = encodeURI(`${dir}레노먼드-${pad2(num)}${ext}`);
+}
+
+/* 유틸 */
+function toneBadge(type){
+  if(type === "negative") return '<span class="tone pos">🔵 긍정</span>';
+  if(type === "positive") return '<span class="tone neg">🔴 부정</span>';
+  return '<span class="tone neu">🟢 중립</span>';
+}
+
+function makeTile(card, onClick=null, showCaption=true){
+  const root = document.createElement("div");
+  root.className = "item";
+
+  const cardDiv = document.createElement("div");
+  cardDiv.className = "card";
+  cardDiv.appendChild(makeImg(card.num));
+  root.appendChild(cardDiv);
+
+  if(showCaption){
+    const cap = document.createElement("div");
+    cap.className = "caption";
+    cap.innerHTML =
+      `<b>${card.num}. ${card.code}</b><br>`+
+      `${toneBadge(card.type)}<br>`+
+      `${card.key}<br>`+
+      `<span class="muted">${card.add}</span>`;
+    root.appendChild(cap);
+  }
+
+  if(onClick) root.onclick = onClick;
+  return root;
+}
+
+function shuffle(arr){
+  return arr.map(v=>[Math.random(),v]).sort((a,b)=>a[0]-b[0]).map(v=>v[1]);
+}
+
+function setOn(btn){
+  document.querySelectorAll(".btn").forEach(b=>b.classList.remove("on"));
+  if(btn) btn.classList.add("on");
+}
+
+function questionHTML(){
+  const use = document.getElementById("useQ").checked;
+  const q = document.getElementById("qtext").value.trim();
+  if(!use || !q) return "";
+  return `<div class="box small"><b>질문:</b> ${q}</div>`;
+}
+
+/* 요약 */
+function summarize(cards){
+  const score = {positive:0,negative:0,neutral:0};
+  cards.forEach(c => { score[c.type]++; });
+  const top = Object.entries(score).sort((a,b)=>b[1]-a[1])[0][0];
+
+  let toneTxt = "";
+  let interp = "";
+  let advice = "";
+  if(top === "negative"){
+    toneTxt = "🔵 긍정";
+    interp = "전반적으로 흐름이 우호적입니다. 추진/확대·회복·합의의 가능성이 높습니다.";
+    advice = "기회가 왔을 때 과감히 잡되, 일정/조건을 명확히 하고 실행하세요.";
+  }else if(top === "positive"){
+    toneTxt = "🔴 부정";
+    interp = "경고 신호가 뚜렷합니다. 단절/지연/소모 이슈에 대비가 필요합니다.";
+    advice = "무리한 확장은 피하고 리스크 관리·정리·보수적 선택을 우선하세요.";
+  }else{
+    toneTxt = "🟢 중립";
+    interp = "상황이 엇갈립니다. 서두르기보다 정보 확인이 우선입니다.";
+    advice = "옵션을 비교·검증한 뒤 작게 시작하거나 유보하는 전략이 유리합니다.";
+  }
+  return {toneTxt, interp, advice};
+}
+
+/* ========= 체인/스프레드별 해석 박스 ========= */
+
+/* 두 카드 체인 문장 */
+function chainSentence(a,b){
+  return `「${a.kr} + ${b.kr}」 체인: ${a.key}에 ${b.key}가 이어지며, ${a.add} 흐름 속에 ${b.add} 포인트가 더해지는 조합입니다.`;
+}
+
+/* 1/2/3/5카드 공통 해석 */
+function interpretN(n,cards){
+  if(!cards || !cards.length) return "";
+  if(n === 1){
+    const c = cards[0];
+    return `
+<div class="box small">
+  <b>1카드 해석 가이드</b>
+  <ul class="list">
+    <li>이 카드는 이번 질문 전체를 대표하는 <b>테마 카드</b>입니다.</li>
+    <li>핵심 키워드: <b>${c.key}</b></li>
+    <li>핵심 메시지: ${c.add}</li>
+    <li>조언: 이 카드를 오늘 상황의 제목처럼 두고, 나머지 현실을 여기에 맞춰 해석해 보세요.</li>
+  </ul>
+</div>`;
+  }
+
+  if(n === 2){
+    const [a,b] = cards;
+    return `
+<div class="box small">
+  <b>2카드 해석 가이드</b>
+  <ul class="list">
+    <li>왼쪽 카드 <b>${a.kr}</b>: 과거·배경, 이미 형성된 기류</li>
+    <li>오른쪽 카드 <b>${b.kr}</b>: 앞으로의 방향·결론 쪽 기류</li>
+  </ul>
+  <b>체인으로 보기</b>
+  <ul class="list">
+    <li>${chainSentence(a,b)}</li>
+  </ul>
+</div>`;
+  }
+
+  if(n === 3){
+    const [a,b,c] = cards;
+    return `
+<div class="box small">
+  <b>3카드 해석 가이드</b>
+  <ul class="list">
+    <li><b>${a.kr}</b> : 과거/출발점·현재를 만들어 낸 계기</li>
+    <li><b>${b.kr}</b> : 현재의 핵심·질문자의 중심 상태</li>
+    <li><b>${c.kr}</b> : 가까운 미래·흐름이 향하는 곳</li>
+  </ul>
+  <b>체인으로 보기</b>
+  <ul class="list">
+    <li>${chainSentence(a,b)}</li>
+    <li>${chainSentence(b,c)}</li>
+  </ul>
+</div>`;
+  }
+
+  if(n === 5){
+    const [c1,c2,c3,c4,c5] = cards;
+    return `
+<div class="box small">
+  <b>5카드 해석 가이드</b>
+  <ul class="list">
+    <li><b>${c1.kr}</b> : 과거·이미 지나간 배경</li>
+    <li><b>${c2.kr}</b> : 현재 상황·지금 느끼는 부분</li>
+    <li><b>${c3.kr}</b> : 중심 조언·핵심 해결 포인트</li>
+    <li><b>${c4.kr}</b> : 주변 영향·타인/환경 요인</li>
+    <li><b>${c5.kr}</b> : 가까운 미래·결과의 방향성</li>
+  </ul>
+  <b>체인으로 보는 흐름</b>
+  <ul class="list">
+    <li>${chainSentence(c1,c2)}</li>
+    <li>${chainSentence(c2,c3)}</li>
+    <li>${chainSentence(c3,c4)}</li>
+    <li>${chainSentence(c4,c5)}</li>
+  </ul>
+</div>`;
+  }
+
+  return "";
+}
+
+/* 십자 스프레드 해석 */
+function interpretCross(cards){
+  if(!cards || cards.length < 5) return "";
+  // drawCross에서 cs[0]~cs[4] 배치
+  const top    = cards[0];
+  const left   = cards[1];
+  const center = cards[2];
+  const right  = cards[3];
+  const bottom = cards[4];
+
+  return `
+<div class="box small">
+  <b>십자 스프레드 해석 가이드</b>
+  <ul class="list">
+    <li><b>중심 (${center.kr})</b> : 질문의 핵심, 현재 상태</li>
+    <li><b>상단 (${top.kr})</b> : 머리·이상·표면적인 생각</li>
+    <li><b>하단 (${bottom.kr})</b> : 현실 기반·무의식·결과의 뿌리</li>
+    <li><b>좌측 (${left.kr})</b> : 과거·이미 지나간 영향</li>
+    <li><b>우측 (${right.kr})</b> : 앞으로 전개될 방향</li>
+  </ul>
+  <b>체인으로 보는 흐름</b>
+  <ul class="list">
+    <li>${chainSentence(left, center)}</li>
+    <li>${chainSentence(center, right)}</li>
+    <li>${chainSentence(top, center)}</li>
+    <li>${chainSentence(center, bottom)}</li>
+  </ul>
+</div>`;
+}
+
+/* 3x3 9카드 해석 (중앙 기준 체인) */
+function interpret3x3(order){
+  if(!order || order.length < 9) return "";
+  const center = order[4];
+  const top    = order[1];
+  const bottom = order[7];
+  const left   = order[3];
+  const right  = order[5];
+
+  const rowMid = [order[3],order[4],order[5]].map(c=>c.kr).join(" - ");
+  const colMid = [order[1],order[4],order[7]].map(c=>c.kr).join(" - ");
+
+  return `
+<div class="box small">
+  <b>3x3 9카드 해석 가이드</b><br>
+  중앙 카드 <b>${center.kr}</b>가 이번 리딩의 <b>메인 테마</b>입니다.
+  <ul class="list">
+    <li><b>중앙 행</b> (${rowMid}) : 질문자가 직접 체감하는 현재 상황의 스토리.</li>
+    <li><b>중앙 열</b> (${colMid}) : 안/밖 환경과 감정의 수직 흐름.</li>
+  </ul>
+  <b>중앙 카드 기준 체인</b>
+  <ul class="list">
+    <li>${chainSentence(left, center)}</li>
+    <li>${chainSentence(center, right)}</li>
+    <li>${chainSentence(top, center)}</li>
+    <li>${chainSentence(center, bottom)}</li>
+  </ul>
+  <p class="small">
+    추가로 각 행·열·대각선을 한 줄 이야기처럼 읽으면,
+    세부 상황과 시간 흐름을 더 풍부하게 해석할 수 있습니다.
+  </p>
+</div>`;
+}
+
+/* 메인 스테이지 */
+const stage = document.getElementById("stage");
+
+/* N장 뽑기 (1,2,3,5) */
+function drawN(n,btn){
+  setOn(btn);
+  const pick = shuffle([...CARDS]).slice(0,n);
+  stage.innerHTML = "";
+  stage.insertAdjacentHTML("beforeend", questionHTML());
+
+  if(n === 5){
+    const row = document.createElement("div");
+    row.className = "spread-5";
+    pick.forEach(c => row.appendChild(makeTile(c)));
+    stage.appendChild(row);
+
+    const sum = summarize(pick);
+    stage.insertAdjacentHTML("beforeend",
+      `<div class="box small"><b>5카드 요약</b><br>`+
+      `전체 톤: ${sum.toneTxt}<br>`+
+      `해석: ${sum.interp}<br>`+
+      `권고: ${sum.advice}</div>`
+    );
+
+    // 🔍 체인/포지션 해석
+    stage.insertAdjacentHTML("beforeend", interpretN(5,pick));
+  }else{
+    const row = document.createElement("div");
+    row.className = "row";
+    pick.forEach(c => row.appendChild(makeTile(c)));
+    stage.appendChild(row);
+
+    // 🔍 1/2/3카드 해석
+    stage.insertAdjacentHTML("beforeend", interpretN(n,pick));
+  }
+}
+
+/* 십자 스프레드 */
+function drawCross(btn){
+  setOn(btn);
+  const cs = shuffle([...CARDS]).slice(0,5);
+  stage.innerHTML = "";
+  stage.insertAdjacentHTML("beforeend", questionHTML());
+
+  const g = document.createElement("div");
+  g.className = "cross";
+  g.appendChild(document.createElement("div"));
+  g.appendChild(makeTile(cs[0]));
+  g.appendChild(document.createElement("div"));
+  g.appendChild(makeTile(cs[1]));
+  g.appendChild(makeTile(cs[2]));
+  g.appendChild(makeTile(cs[3]));
+  g.appendChild(document.createElement("div"));
+  g.appendChild(makeTile(cs[4]));
+  g.appendChild(document.createElement("div"));
+  stage.appendChild(g);
+
+  // 🔍 십자 해석
+  stage.insertAdjacentHTML("beforeend", interpretCross(cs));
+}
+
+/* 3x3 9카드 스프레드 (중앙 카드 선택 가능) */
+function draw3x3(btn){
+  setOn(btn);
+  stage.innerHTML = "";
+  stage.insertAdjacentHTML("beforeend", questionHTML());
+
+  const sel = document.getElementById("center-select");
+  const chosenVal = sel ? sel.value : "";
+  const deck = [...CARDS];
+  let centerCard = null;
+  let others = [];
+
+  if(chosenVal){
+    const chosenNum = parseInt(chosenVal,10);
+    const idx = deck.findIndex(c => c.num === chosenNum);
+    if(idx !== -1){
+      centerCard = deck.splice(idx,1)[0]; // 선택한 카드를 덱에서 제거
+    }
+    const shuffled = shuffle(deck);
+    others = shuffled.slice(0,8); // 나머지 8장
+  }else{
+    const shuffled = shuffle(deck);
+    const nine = shuffled.slice(0,9);
+    centerCard = nine[4];               // 가운데 카드 하나 선택
+    others = nine.filter((_,i)=>i!==4);  // 나머지 8장
+  }
+
+  // 3x3 배열 만들기 (인덱스 4가 중앙)
+  const order = [];
+  let oi = 0;
+  for(let i=0;i<9;i++){
+    if(i === 4){
+      order.push(centerCard);
+    }else{
+      order.push(others[oi++]);
+    }
+  }
+
+  const grid = document.createElement("div");
+  grid.className = "grid3x3";
+  order.forEach(c => grid.appendChild(makeTile(c)));
+  stage.appendChild(grid);
+
+  const sum = summarize(order);
+  stage.insertAdjacentHTML("beforeend",
+    `<div class="box small"><b>9카드(3x3) 요약</b><br>`+
+    `전체 톤: ${sum.toneTxt}<br>`+
+    `해석: ${sum.interp}<br>`+
+    `권고: ${sum.advice}</div>`
+  );
+
+  // 🔍 3x3 체인/중앙 기준 해석
+  stage.insertAdjacentHTML("beforeend", interpret3x3(order));
+}
+
+/* 🔄 초기화 기능 */
+function resetAll(){
+  // 버튼 on 상태 제거
+  setOn(null);
+
+  // 스테이지 비우기
+  if(stage){
+    stage.innerHTML = "";
+  }
+
+  // 질문 영역 리셋
+  const qInput = document.getElementById("qtext");
+  const qCheck = document.getElementById("useQ");
+  if(qInput) qInput.value = "";
+  if(qCheck) qCheck.checked = false;
+
+  // 중앙 카드 선택값 리셋
+  const sel = document.getElementById("center-select");
+  if(sel) sel.value = "";
+}
+
+/* 🔐 아주 간단한 비밀번호 잠금 (눈가림용) */
+(function(){
+  const PASSWORD = "gnskgnsk";   // 사용자가 지정한 비밀번호
+
+  const lock  = document.getElementById("lock-screen");
+  const app   = document.getElementById("app");
+  const input = document.getElementById("pw-input");
+  const btn   = document.getElementById("pw-btn");
+  const error = document.getElementById("pw-error");
+
+  function unlock(){
+    const val = input.value.trim();
+    if(val === PASSWORD){
+      lock.style.display = "none";
+      app.style.display  = "block";
+      error.style.display = "none";
+      input.value = "";
+    }else{
+      error.style.display = "block";
+    }
+  }
+
+  btn.addEventListener("click", unlock);
+  input.addEventListener("keydown", e=>{
+    if(e.key === "Enter") unlock();
+  });
+})();
+</script>
+</body>
+</html>
