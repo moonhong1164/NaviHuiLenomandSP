@@ -179,22 +179,6 @@
   .horoscope .card{
     width:90px;
   }
-  .h-pos{
-    position:absolute;
-  }
-  /* 대략 이미지와 비슷하게 배치 */
-  .h-pos-1{left:4%; bottom:6%;}
-  .h-pos-2{left:18%; bottom:2%;}
-  .h-pos-3{left:36%; bottom:2%;}
-  .h-pos-4{left:54%; bottom:2%;}
-  .h-pos-5{right:18%; bottom:6%;}
-  .h-pos-6{right:4%; bottom:22%;}
-  .h-pos-7{right:4%; top:22%;}
-  .h-pos-8{right:18%; top:6%;}
-  .h-pos-9{left:54%; top:0%;}
-  .h-pos-10{left:36%; top:0%;}
-  .h-pos-11{left:18%; top:6%;}
-  .h-pos-12{left:4%; top:22%;}
 
   .box{
     margin-top:14px;
@@ -453,7 +437,7 @@ function chainSentence(a,b){
 function interpretN(n,cards){
   if(!cards || !cards.length) return "";
 
-  /* 1카드: 한 장으로 핵심 톤 확인 */
+  /* 1카드 */
   if(n === 1){
     const c = cards[0];
     return `
@@ -468,7 +452,7 @@ function interpretN(n,cards){
 </div>`;
   }
 
-  /* 2카드: 상황 + 결과/대응 */
+  /* 2카드 */
   if(n === 2){
     const [a,b] = cards;
     return `
@@ -486,7 +470,7 @@ function interpretN(n,cards){
 </div>`;
   }
 
-  /* 3카드: 2번이 중심인 라인 스프레드 */
+  /* 3카드 */
   if(n === 3){
     const [c1,c2,c3] = cards;
     return `
@@ -506,7 +490,7 @@ function interpretN(n,cards){
 </div>`;
   }
 
-  /* 5카드: 실전에서 많이 쓰는 라인 스프레드 */
+  /* 5카드 */
   if(n === 5){
     const [c1,c2,c3,c4,c5] = cards;
     return `
@@ -534,12 +518,11 @@ function interpretN(n,cards){
 /* 십자 스프레드 해석 */
 function interpretCross(cards){
   if(!cards || cards.length < 5) return "";
-  // drawCross에서 cs[0]~cs[4] 배치
-  const top    = cards[0]; // 위
-  const left   = cards[1]; // 왼쪽
-  const center = cards[2]; // 중심(표지자/주제)
-  const right  = cards[3]; // 오른쪽
-  const bottom = cards[4]; // 아래
+  const top    = cards[0];
+  const left   = cards[1];
+  const center = cards[2];
+  const right  = cards[3];
+  const bottom = cards[4];
 
   return `
 <div class="box small">
@@ -578,7 +561,6 @@ function interpret3x3(order){
   const diag159        = [c1.kr, c5.kr, c9.kr].join(" - ");
   const diag357        = [c3.kr, c5.kr, c7.kr].join(" - ");
 
-  // 중앙 카드가 선택된 주제 카드인지 여부
   const sel = document.getElementById("center-select");
   const hasSignificator = sel && sel.value && sel.value !== "";
 
@@ -640,7 +622,7 @@ function interpretHoroscope(cards){
     <li>3–4–10번 하우스 (<b>${c3.kr}, ${c4.kr}, ${c10.kr}</b>) : 가족·형제·부모와의 관계, 가정과 커리어의 균형</li>
     <li>1–6–8번 하우스 (<b>${c1.kr}, ${c6.kr}, ${c8.kr}</b>) : 건강, 생활 리듬, 피할 수 없는 변화가 몸에 미치는 영향</li>
     <li>2–6–11번 하우스 (<b>${c2.kr}, ${c6.kr}, ${c11.kr}</b>) : 일·재정·사회적 네트워크가 서로에게 미치는 영향</li>
-    <li>4–8–12번 하우스 (<b>${c4.kr}, ${c8.kr}, ${c12.kr}</b>) : 영적인 면, 뿌리·가족karma, 직관·무의식에서 올라오는 문제</li>
+    <li>4–8–12번 하우스 (<b>${c4.kr}, ${c8.kr}, ${c12.kr}</b>) : 영적인 면, 뿌리·가족 카르마, 직관·무의식에서 올라오는 문제</li>
   </ul>
   <p class="small">
     각 하우스를 단독으로 읽은 뒤, 위와 같은 하우스 묶음을 작은 체인처럼 이어 보면
@@ -674,7 +656,6 @@ function drawN(n,btn){
       `권고: ${sum.advice}</div>`
     );
 
-    // 🔍 5카드 라인 해석
     stage.insertAdjacentHTML("beforeend", interpretN(5,pick));
   }else{
     const row = document.createElement("div");
@@ -682,7 +663,6 @@ function drawN(n,btn){
     pick.forEach(c => row.appendChild(makeTile(c)));
     stage.appendChild(row);
 
-    // 🔍 1/2/3카드 해석
     stage.insertAdjacentHTML("beforeend", interpretN(n,pick));
   }
 }
@@ -707,7 +687,6 @@ function drawCross(btn){
   g.appendChild(document.createElement("div"));
   stage.appendChild(g);
 
-  // 🔍 십자 해석
   stage.insertAdjacentHTML("beforeend", interpretCross(cs));
 }
 
@@ -727,18 +706,17 @@ function draw3x3(btn){
     const chosenNum = parseInt(chosenVal,10);
     const idx = deck.findIndex(c => c.num === chosenNum);
     if(idx !== -1){
-      centerCard = deck.splice(idx,1)[0]; // 선택한 카드를 덱에서 제거
+      centerCard = deck.splice(idx,1)[0];
     }
     const shuffled = shuffle(deck);
-    others = shuffled.slice(0,8); // 나머지 8장
+    others = shuffled.slice(0,8);
   }else{
     const shuffled = shuffle(deck);
     const nine = shuffled.slice(0,9);
-    centerCard = nine[4];               // 가운데 카드 하나 선택
-    others = nine.filter((_,i)=>i!==4);  // 나머지 8장
+    centerCard = nine[4];
+    others = nine.filter((_,i)=>i!==4);
   }
 
-  // 3x3 배열 만들기 (인덱스 4가 중앙)
   const order = [];
   let oi = 0;
   for(let i=0;i<9;i++){
@@ -762,11 +740,10 @@ function draw3x3(btn){
     `권고: ${sum.advice}</div>`
   );
 
-  // 🔍 3x3 체인/중앙 기준 해석
   stage.insertAdjacentHTML("beforeend", interpret3x3(order));
 }
 
-/* 🔮 호로스코프 스프레드 (12카드) */
+/* 🔮 호로스코프 스프레드 (12카드) – 겹치지 않도록 원형 좌표로 배치 */
 function drawHoroscope(btn){
   setOn(btn);
   const pick = shuffle([...CARDS]).slice(0,12);
@@ -776,9 +753,24 @@ function drawHoroscope(btn){
   const wrap = document.createElement("div");
   wrap.className = "horoscope";
 
+  const centerX = 50;   // %
+  const centerY = 50;   // %
+  const radiusX = 40;   // 가로 반지름(%)
+  const radiusY = 38;   // 세로 반지름(%)
+
   pick.forEach((c,idx)=>{
     const tile = makeTile(c);
-    tile.classList.add("h-pos", `h-pos-${idx+1}`);
+    tile.style.position = "absolute";
+
+    // 12장의 중심각 (위쪽에서 시작, 시계 방향)
+    const angle = (idx / 12) * 2 * Math.PI - Math.PI / 2;
+    const x = centerX + radiusX * Math.cos(angle);
+    const y = centerY + radiusY * Math.sin(angle);
+
+    tile.style.left = x + "%";
+    tile.style.top  = y + "%";
+    tile.style.transform = "translate(-50%, -50%)";
+
     wrap.appendChild(tile);
   });
 
@@ -797,28 +789,21 @@ function drawHoroscope(btn){
 
 /* 🔄 초기화 기능 */
 function resetAll(){
-  // 버튼 on 상태 제거
   setOn(null);
-
-  // 스테이지 비우기
   if(stage){
     stage.innerHTML = "";
   }
-
-  // 질문 영역 리셋
   const qInput = document.getElementById("qtext");
   const qCheck = document.getElementById("useQ");
   if(qInput) qInput.value = "";
   if(qCheck) qCheck.checked = false;
-
-  // 중앙 카드 선택값 리셋
   const sel = document.getElementById("center-select");
   if(sel) sel.value = "";
 }
 
 /* 🔐 아주 간단한 비밀번호 잠금 (눈가림용) */
 (function(){
-  const PASSWORD = "gnskgnsk";   // 사용자가 지정한 비밀번호
+  const PASSWORD = "gnskgnsk";
 
   const lock  = document.getElementById("lock-screen");
   const app   = document.getElementById("app");
