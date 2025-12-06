@@ -169,17 +169,6 @@
     justify-items:center;
   }
 
-  /* 🔮 호로스코프(12카드) 원형 배치 */
-  .horoscope{
-    position:relative;
-    max-width:640px;
-    height:380px;
-    margin:0 auto;
-  }
-  .horoscope .card{
-    width:90px;
-  }
-
   .box{
     margin-top:14px;
     padding:12px;
@@ -204,17 +193,11 @@
     .spread-5 .caption{
       font-size:11px;
     }
-
-    .horoscope{height:320px;}
-    .horoscope .card{width:72px;}
   }
   @media (max-width:480px){
     .card{width:90px;}
     .cross .card{max-width:120px;}
     .spread-5 .card{width:16vw;}
-
-    .horoscope{height:280px;}
-    .horoscope .card{width:64px;}
   }
 </style>
 </head>
@@ -251,7 +234,6 @@
         <span>중앙카드</span>
         <select id="center-select">
           <option value="">랜덤</option>
-          <!-- JS에서 카드 목록으로 자동 채워짐 -->
         </select>
       </div>
 
@@ -261,8 +243,6 @@
       <button class="btn" onclick="drawN(5,this)">5카드</button>
       <button class="btn" onclick="drawCross(this)">+ 십자</button>
       <button class="btn" onclick="draw3x3(this)">9카드(3x3)</button>
-      <button class="btn" onclick="drawHoroscope(this)">호로스(12)</button>
-      <!-- 🔄 초기화 버튼 (색만 다르게) -->
       <button class="btn btn-reset" onclick="resetAll()">초기화</button>
     </div>
 
@@ -327,10 +307,9 @@ function initCenterSelect(){
     sel.appendChild(opt);
   });
 }
-
 document.addEventListener("DOMContentLoaded", initCenterSelect);
 
-/* 이미지 로딩 (레노먼드-01.png 등 자동 시도) */
+/* 이미지 로딩 */
 const IMG_DIR_CANDIDATES = ["","cards/","images/","img/"];
 const IMG_EXT_CANDIDATES = [".png",".webp",".jpg",".PNG",".JPG"];
 const pad2 = n => String(n).padStart(2,"0");
@@ -401,7 +380,7 @@ function questionHTML(){
   return `<div class="box small"><b>질문:</b> ${q}</div>`;
 }
 
-/* 요약 */
+/* 톤 요약 */
 function summarize(cards){
   const score = {positive:0,negative:0,neutral:0};
   cards.forEach(c => { score[c.type]++; });
@@ -426,18 +405,16 @@ function summarize(cards){
   return {toneTxt, interp, advice};
 }
 
-/* ========= 체인/스프레드별 해석 박스 ========= */
+/* ===== 스프레드별 해석 ===== */
 
-/* 두 카드 체인 문장 */
 function chainSentence(a,b){
   return `「${a.kr} + ${b.kr}」 체인: ${a.key} 위에 ${b.key}가 이어지며, ${a.add} 흐름 속에 ${b.add}가 더해지는 조합입니다.`;
 }
 
-/* 1/2/3/5카드 공통 해석 */
+/* 1/2/3/5카드 해석 박스 */
 function interpretN(n,cards){
   if(!cards || !cards.length) return "";
 
-  /* 1카드 */
   if(n === 1){
     const c = cards[0];
     return `
@@ -452,7 +429,6 @@ function interpretN(n,cards){
 </div>`;
   }
 
-  /* 2카드 */
   if(n === 2){
     const [a,b] = cards;
     return `
@@ -470,7 +446,6 @@ function interpretN(n,cards){
 </div>`;
   }
 
-  /* 3카드 */
   if(n === 3){
     const [c1,c2,c3] = cards;
     return `
@@ -490,7 +465,6 @@ function interpretN(n,cards){
 </div>`;
   }
 
-  /* 5카드 */
   if(n === 5){
     const [c1,c2,c3,c4,c5] = cards;
     return `
@@ -501,7 +475,6 @@ function interpretN(n,cards){
     <li>1+2 (<b>${c1.kr} → ${c2.kr}</b>) : 3번 카드가 생기게 된 <b>원인·배경</b></li>
     <li>4+5 (<b>${c4.kr} → ${c5.kr}</b>) : 앞으로 나타날 <b>결과·정리 방향</b></li>
   </ul>
-
   <b>경첩(라인) 구조로 보는 조합</b>
   <ul class="list">
     <li>1+2+4 : 주제의 성격을 더 깊게 묘사할 때 사용하는 보조 조합</li>
@@ -534,10 +507,9 @@ function interpretCross(cards){
     <li><b>왼쪽 (${left.kr})</b> : 과거, 사건의 계기, 조건 등 <b>이미 지나간 영향</b></li>
     <li><b>오른쪽 (${right.kr})</b> : 앞으로 전개될 <b>미래·가능한 결과</b></li>
   </ul>
-
   <b>크로스 조합으로 전체 흐름 잡기</b>
   <ul class="list">
-    <li>1+4+3 (왼쪽–위–오른쪽) : 겉으로 드러나는 전개 방향을 볼 때</li>
+    <li>1+4+3 (왼쪽–위–오른쪽) : 겉으로 드러나는 전개 방향</li>
     <li>4+1+5 (위–왼쪽–아래) : 과거 동기에서 비롯된 현재의 뿌리</li>
     <li>1+5+3 (왼쪽–아래–오른쪽) : 감정적 흐름과 결과</li>
     <li>4+3+5 (위–오른쪽–아래) : 머릿속 기대와 실제 결과의 간극</li>
@@ -546,7 +518,7 @@ function interpretCross(cards){
 </div>`;
 }
 
-/* 3x3 9카드 해석 (중앙 카드 기준) */
+/* 3x3 9카드 해석 */
 function interpret3x3(order){
   if(!order || order.length < 9) return "";
 
@@ -583,51 +555,9 @@ function interpret3x3(order){
   </ul>
 
   <p class="small">
-    필요하다면 각 줄(가로·세로·대각선)을 3카드 라인처럼 하나의 문장으로 정리하고,
+    각 줄(가로·세로·대각선)을 3카드 라인처럼 하나의 문장으로 정리하고,
     특히 중앙 카드 ${c5.kr}을 기준으로 “앞(1·4·7)”과 “뒤(3·6·9)”의 대비를 살피면
     과거에서 미래로 이어지는 흐름이 더 또렷해집니다.
-  </p>
-</div>`;
-}
-
-/* 🔮 호로스코프 스프레드 해석 */
-function interpretHoroscope(cards){
-  if(!cards || cards.length < 12) return "";
-
-  const c1 = cards[0], c2 = cards[1], c3 = cards[2], c4 = cards[3];
-  const c5 = cards[4], c6 = cards[5], c7 = cards[6], c8 = cards[7];
-  const c9 = cards[8], c10 = cards[9], c11 = cards[10], c12 = cards[11];
-
-  return `
-<div class="box small">
-  <b>호로스코프(12하우스) 스프레드 해석 가이드</b>
-  <ul class="list">
-    <li><b>1번 (${c1.kr})</b> : 나 자신, 외모·신체, 건강, 외부 세계에 보이는 모습</li>
-    <li><b>2번 (${c2.kr})</b> : 소유한 것, 재물·수입, 재산, 재정 전망</li>
-    <li><b>3번 (${c3.kr})</b> : 커뮤니케이션, 주변과의 교류, 지식, 형제·친구, 짧은 여행</li>
-    <li><b>4번 (${c4.kr})</b> : 아버지, 조상·뿌리, 가족, 거주지, 소속감, 부동산</li>
-    <li><b>5번 (${c5.kr})</b> : 유흥, 취미, 쾌락, 연애·로맨스</li>
-    <li><b>6번 (${c6.kr})</b> : 건강·질병, 일·직장, 개인적 책임, 작은 애완동물</li>
-    <li><b>7번 (${c7.kr})</b> : 배우자·연인·파트너십, 동업자, 경쟁자·적</li>
-    <li><b>8번 (${c8.kr})</b> : 죽음·사고·유산, 받아들여야 하고 바꿀 수 없는 것들</li>
-    <li><b>9번 (${c9.kr})</b> : 고등교육, 학문, 종교·신념, 긴 여행</li>
-    <li><b>10번 (${c10.kr})</b> : 직업·사회활동, 명예, 어머니, 경력·명성</li>
-    <li><b>11번 (${c11.kr})</b> : 사회적 관계, 개인적 인연, 행운, 친구, 희망, 사회 집단</li>
-    <li><b>12번 (${c12.kr})</b> : 집·두려움, 미지의 것, 비밀·무의식, 고독, 숨겨진 것들</li>
-  </ul>
-
-  <b>하우스 연계 리딩 예시</b>
-  <ul class="list">
-    <li>5–7번 하우스 (<b>${c5.kr}, ${c7.kr}</b>) : 연애·파트너십·결혼 문제 전반</li>
-    <li>3–4–10번 하우스 (<b>${c3.kr}, ${c4.kr}, ${c10.kr}</b>) : 가족·형제·부모와의 관계, 가정과 커리어의 균형</li>
-    <li>1–6–8번 하우스 (<b>${c1.kr}, ${c6.kr}, ${c8.kr}</b>) : 건강, 생활 리듬, 피할 수 없는 변화가 몸에 미치는 영향</li>
-    <li>2–6–11번 하우스 (<b>${c2.kr}, ${c6.kr}, ${c11.kr}</b>) : 일·재정·사회적 네트워크가 서로에게 미치는 영향</li>
-    <li>4–8–12번 하우스 (<b>${c4.kr}, ${c8.kr}, ${c12.kr}</b>) : 영적인 면, 뿌리·가족 카르마, 직관·무의식에서 올라오는 문제</li>
-  </ul>
-  <p class="small">
-    각 하우스를 단독으로 읽은 뒤, 위와 같은 하우스 묶음을 작은 체인처럼 이어 보면
-    “나(1번)와 관계·일·재정이 서로 어떻게 얽혀 있는지”를 한 눈에 정리할 수 있습니다.
-    필요하다면 각 하우스를 또 다른 3카드 라인으로 확장해 깊이 있게 볼 수도 있습니다.
   </p>
 </div>`;
 }
@@ -655,14 +585,12 @@ function drawN(n,btn){
       `해석: ${sum.interp}<br>`+
       `권고: ${sum.advice}</div>`
     );
-
     stage.insertAdjacentHTML("beforeend", interpretN(5,pick));
   }else{
     const row = document.createElement("div");
     row.className = "row";
     pick.forEach(c => row.appendChild(makeTile(c)));
     stage.appendChild(row);
-
     stage.insertAdjacentHTML("beforeend", interpretN(n,pick));
   }
 }
@@ -739,52 +667,7 @@ function draw3x3(btn){
     `해석: ${sum.interp}<br>`+
     `권고: ${sum.advice}</div>`
   );
-
   stage.insertAdjacentHTML("beforeend", interpret3x3(order));
-}
-
-/* 🔮 호로스코프 스프레드 (12카드) – 겹치지 않도록 원형 좌표로 배치 */
-function drawHoroscope(btn){
-  setOn(btn);
-  const pick = shuffle([...CARDS]).slice(0,12);
-  stage.innerHTML = "";
-  stage.insertAdjacentHTML("beforeend", questionHTML());
-
-  const wrap = document.createElement("div");
-  wrap.className = "horoscope";
-
-  const centerX = 50;   // %
-  const centerY = 50;   // %
-  const radiusX = 40;   // 가로 반지름(%)
-  const radiusY = 38;   // 세로 반지름(%)
-
-  pick.forEach((c,idx)=>{
-    const tile = makeTile(c);
-    tile.style.position = "absolute";
-
-    // 12장의 중심각 (위쪽에서 시작, 시계 방향)
-    const angle = (idx / 12) * 2 * Math.PI - Math.PI / 2;
-    const x = centerX + radiusX * Math.cos(angle);
-    const y = centerY + radiusY * Math.sin(angle);
-
-    tile.style.left = x + "%";
-    tile.style.top  = y + "%";
-    tile.style.transform = "translate(-50%, -50%)";
-
-    wrap.appendChild(tile);
-  });
-
-  stage.appendChild(wrap);
-
-  const sum = summarize(pick);
-  stage.insertAdjacentHTML("beforeend",
-    `<div class="box small"><b>호로스코프 전체 톤</b><br>`+
-    `전체 톤: ${sum.toneTxt}<br>`+
-    `해석: ${sum.interp}<br>`+
-    `권고: ${sum.advice}</div>`
-  );
-
-  stage.insertAdjacentHTML("beforeend", interpretHoroscope(pick));
 }
 
 /* 🔄 초기화 기능 */
@@ -801,7 +684,7 @@ function resetAll(){
   if(sel) sel.value = "";
 }
 
-/* 🔐 아주 간단한 비밀번호 잠금 (눈가림용) */
+/* 🔐 비밀번호 잠금 */
 (function(){
   const PASSWORD = "gnskgnsk";
 
