@@ -337,6 +337,51 @@ const CARDS = [
   {num:36,code:"Cross",   kr:"십자가", key:"고난•신념",   add:"책임·버티기",       type:"positive"},
 ];
 
+/* 하우스 한국어 의미 (tarotplay 표 참고) */
+const HOUSE_MEANINGS = [
+  "소식, 방문객",              //1 Rider
+  "행운, 기회",                //2 Clover
+  "여행",                      //3 Ship
+  "집, 가족, 안전 문제",       //4 House
+  "건강",                      //5 Tree
+  "혼란, 걱정",                //6 Clouds
+  "적, 배신자, 유혹",          //7 Snake
+  "질병",                      //8 Coffin
+  "선물",                      //9 Bouquet
+  "끝, 종결",                  //10 Scythe
+  "다툼, 의무, 처벌",          //11 Whip
+  "소그룹, SNS, 소문",         //12 Birds
+  "아이",                      //13 Child
+  "직업, 직장",                //14 Fox
+  "권위, 힘",                  //15 Bear
+  "희망, 소원",                //16 Stars
+  "변화, 개선",                //17 Stork
+  "친구, 우정",                //18 Dog
+  "법, 야망, 공식적인 문제",  //19 Tower
+  "큰 모임, 파티, 사회 활동",  //20 Garden
+  "어려움, 장기적인 문제",     //21 Mountain
+  "선택지",                    //22 Paths
+  "스트레스, 걱정",            //23 Mice
+  "사랑",                      //24 Heart
+  "약속, 헌신, 유대감",        //25 Ring
+  "공부, 학업, 비밀",          //26 Book
+  "문서, 소식",                //27 Letter
+  "남자",                      //28 Man
+  "여자",                      //29 Woman
+  "오래된 것, 기억, 성(性)",   //30 Lilies
+  "성공, 의지",                //31 Sun
+  "예술, 명성, 평판 문제",     //32 Moon
+  "성공, 중요한 것",          //33 Key
+  "금전",                      //34 Fish
+  "안정, 안전",                //35 Anchor
+  "고통, 짐, 어려움, 신앙"     //36 Cross
+];
+
+/* 그랑타블로 상태 */
+let currentGTType = null;      // '8x4' | '9x4'
+let currentGTDeck = null;      // 현재 펼친 36장 배열
+let currentGTKeyIndex = null;  // 0~35
+
 /* 키카드 셀렉트 초기화 */
 function initCenterSelect(){
   const sel = document.getElementById("center-select");
@@ -603,63 +648,27 @@ function interpret3x3(order){
 </div>`;
 }
 
-/* 그랑타블로 8x4+4 해석 */
-function interpretGT8x4(order, keyNum){
-  let html = `
+/* 그랑타블로 8x4+4 기본 설명 */
+function interpretGT8x4(order){
+  return `
 <div class="box small">
   <b>그랑타블로 8x4+4 해석 가이드</b>
   <ul class="list">
     <li>36장을 모두 사용하는 대형 스프레드입니다.</li>
-    <li>위에서부터 네 줄(각 8장)은 <b>현재·주변 환경·중·장기적 흐름</b>을, 맨 아래 4장은 <b>운명/총정리 라인</b>으로 봅니다.</li>
-    <li>가로줄, 세로줄, 대각선, 기사 이동(두 칸+한 칸) 등으로 세부 흐름을 읽을 수 있습니다.</li>
-  </ul>
-`;
-
-  if(!keyNum){
-    html += `
-  <p class="small">
-    키카드를 지정하지 않은 경우에는, 각 줄과 카드 뭉치를 중심으로 전체 분위기·과거와 미래의 축을 나누어 읽습니다.
-    사람 카드(28/29)가 어디에 있는지, 태양·별·열쇠·십자가 등 강한 카드가 어느 줄에 모여 있는지도 함께 살펴보면 좋습니다.
-  </p>
-</div>`;
-    return html;
-  }
-
-  const idx = order.findIndex(c => c.num === keyNum);
-  if(idx === -1){
-    html += `<p class="small">선택한 키카드를 배열에서 찾지 못했습니다. (정상 배치라면 36장 안에 반드시 포함됩니다.)</p></div>`;
-    return html;
-  }
-
-  const keyCard = order[idx];
-  const house = idx + 1;
-  let zone = "";
-  if(house <= 8) zone = "1행 — 겉으로 보이는 현재 상황·외부 환경";
-  else if(house <= 16) zone = "2행 — 가까운 미래, 주변 사람들의 영향";
-  else if(house <= 24) zone = "3행 — 중·장기 흐름, 내면과 현실을 잇는 영역";
-  else if(house <= 32) zone = "4행 — 결과·정리 단계, 이야기가 어디로 귀결되는지";
-  else zone = "맨 아래 4장 — 운명/총정리 라인, 전체 리딩의 결론";
-
-  html += `
-  <ul class="list">
-    <li>키카드 <b>${keyCard.kr} (${keyCard.num})</b>는 <b>${house}번 하우스</b>, <b>${zone}</b>에 위치합니다.</li>
-    <li>키카드 기준 왼쪽 카드들은 <b>이미 지나간 일·과거의 영향</b>을, 오른쪽 카드들은 <b>앞으로 들어올 상황·미래</b>를 보여줍니다.</li>
-    <li>키카드 위쪽 줄은 <b>머리·의식·계획</b>, 아래쪽 줄은 <b>감정·현실적인 결과·몸의 반응</b>으로 볼 수 있습니다.</li>
+    <li>위 네 줄(각 8장)은 <b>현재·주변 환경·중·장기적 흐름</b>, 맨 아래 4장은 <b>운명/총정리 카드</b>로 봅니다.</li>
+    <li>각 자리(1~36)는 <b>해당 번호 카드의 하우스</b>와 연결되어, 예를 들어 7번 자리는 Snake 하우스(“적, 배신자, 유혹”)처럼 읽을 수 있습니다.</li>
+    <li>가로줄, 세로줄, 대각선, 기사(나이트) 이동 등 다양한 구조를 3카드 체인처럼 이어서 문장으로 만들면 그랑타블로 리딩이 자연스럽게 풀립니다.</li>
   </ul>
   <p class="small">
-    실전에서는 키카드를 중심으로 가로줄(과거→미래), 세로줄(위→아래), 대각선, 가까이 모여 있는 카드 뭉치를
-    3카드 체인처럼 이어서 문장으로 만들면 됩니다.  
-    예를 들어 “왼쪽 두 장은 과거의 계기, 오른쪽 두 장은 앞으로의 전개, 키카드 바로 위/아래는
-    이 상황에 대한 머리와 마음의 반응”처럼 구분해 읽어 주세요.
+    아래에서 <b>원하는 카드를 클릭하면</b> 그 카드를 키카드로 하여  
+    하우스 의미, 주변 카드, 나이팅 카드에 대한 설명이 따로 표시됩니다.
   </p>
 </div>`;
-
-  return html;
 }
 
-/* 그랑타블로 9x4 해석 */
-function interpretGT9x4(order, keyNum){
-  let html = `
+/* 그랑타블로 9x4 기본 설명 */
+function interpretGT9x4(order){
+  return `
 <div class="box small">
   <b>그랑타블로 9x4 해석 가이드</b>
   <ul class="list">
@@ -667,69 +676,209 @@ function interpretGT9x4(order, keyNum){
     <li>상단 두 줄은 <b>현재·가까운 미래</b>, 하단 두 줄은 <b>중·장기 전망·깊은 무의식</b>으로 보는 경우가 많습니다.</li>
     <li>세로열은 주제별(관계·일·재정·내면 등) 흐름을, 가로줄은 시간의 흐름(과거→미래)으로 읽을 수 있습니다.</li>
   </ul>
-`;
+  <p class="small">
+    이 레이아웃 역시 <b>임의의 카드를 클릭해서 키카드로 설정</b>하면  
+    그 카드 주변 구조와 나이팅 카드를 중심으로 세부 해석을 볼 수 있습니다.
+  </p>
+</div>`;
+}
 
-  if(!keyNum){
+/* ===== 8x4+4 / 9x4 좌표 & 이웃/나이팅 ===== */
+
+/* 8x4+4 좌표: 위 4줄은 8칸, 마지막 줄은 가운데 4칸(열 2~5) */
+function coord8(idx){
+  if(idx < 32){
+    return {r:Math.floor(idx/8), c:idx%8};
+  }else{
+    const off = idx - 32;      // 0~3
+    return {r:4, c:2+off};     // 열 2~5
+  }
+}
+function idx8(r,c){
+  if(r < 0 || r > 4 || c < 0 || c > 7) return null;
+  if(r < 4) return r*8 + c;
+  if(r === 4){
+    if(c < 2 || c > 5) return null;
+    return 32 + (c-2);
+  }
+  return null;
+}
+
+/* 9x4 좌표 */
+function coord9(idx){
+  return {r:Math.floor(idx/9), c:idx%9};
+}
+function idx9(r,c){
+  if(r < 0 || r > 3 || c < 0 || c > 8) return null;
+  return r*9 + c;
+}
+
+/* 주변 카드 */
+function getNeighbors8(idx){
+  const {r,c} = coord8(idx);
+  const dirs = {
+    left: idx8(r, c-1),
+    right: idx8(r, c+1),
+    up: idx8(r-1, c),
+    down: idx8(r+1, c),
+    upLeft: idx8(r-1, c-1),
+    upRight: idx8(r-1, c+1),
+    downLeft: idx8(r+1, c-1),
+    downRight: idx8(r+1, c+1),
+  };
+  const mapped = {};
+  Object.keys(dirs).forEach(k=>{
+    const di = dirs[k];
+    mapped[k] = di != null && currentGTDeck ? currentGTDeck[di] : null;
+  });
+  return mapped;
+}
+function getNeighbors9(idx){
+  const {r,c} = coord9(idx);
+  const dirs = {
+    left: idx9(r, c-1),
+    right: idx9(r, c+1),
+    up: idx9(r-1, c),
+    down: idx9(r+1, c),
+    upLeft: idx9(r-1, c-1),
+    upRight: idx9(r-1, c+1),
+    downLeft: idx9(r+1, c-1),
+    downRight: idx9(r+1, c+1),
+  };
+  const mapped = {};
+  Object.keys(dirs).forEach(k=>{
+    const di = dirs[k];
+    mapped[k] = di != null && currentGTDeck ? currentGTDeck[di] : null;
+  });
+  return mapped;
+}
+
+/* 나이팅 (기사 이동) */
+const KNIGHT_OFFSETS = [
+  [-2,-1],[-2,1],
+  [-1,-2],[-1,2],
+  [1,-2],[1,2],
+  [2,-1],[2,1],
+];
+
+function getKnights8(idx){
+  const {r,c} = coord8(idx);
+  const set = new Set();
+  KNIGHT_OFFSETS.forEach(([dr,dc])=>{
+    const ni = idx8(r+dr, c+dc);
+    if(ni != null) set.add(ni);
+  });
+  return currentGTDeck ? Array.from(set).map(i=>currentGTDeck[i]) : [];
+}
+
+function getKnights9(idx){
+  const {r,c} = coord9(idx);
+  const set = new Set();
+  KNIGHT_OFFSETS.forEach(([dr,dc])=>{
+    const ni = idx9(r+dr, c+dc);
+    if(ni != null) set.add(ni);
+  });
+  return currentGTDeck ? Array.from(set).map(i=>currentGTDeck[i]) : [];
+}
+
+/* 키카드 클릭 핸들러 */
+function setGTKey(idx){
+  if(!currentGTDeck || idx == null) return;
+  currentGTKeyIndex = idx;
+
+  const keyCard = currentGTDeck[idx];
+  const sel = document.getElementById("center-select");
+  if(sel) sel.value = String(keyCard.num);
+
+  // 하이라이트 초기화 & 지정
+  document.querySelectorAll('[data-gt-idx]').forEach(el=>{
+    el.classList.remove("keycard");
+  });
+  const target = document.querySelector('[data-gt-idx="'+idx+'"]');
+  if(target) target.classList.add("keycard");
+
+  renderGTDetail();
+}
+
+/* 그랑타블로 상세 해석 박스 */
+function renderGTDetail(){
+  const detail = document.getElementById("gt-detail");
+  if(!detail) return;
+
+  if(!currentGTDeck || currentGTKeyIndex == null){
+    detail.innerHTML = `
+      <div class="box small">
+        그랑타블로에서 <b>키카드로 보고 싶은 카드를 클릭</b>하면<br>
+        해당 하우스 의미, 주변 카드, 나이팅 카드 해석이 여기 표시됩니다.
+      </div>`;
+    return;
+  }
+
+  const keyCard = currentGTDeck[currentGTKeyIndex];
+  const houseNum = currentGTKeyIndex + 1;
+  const houseText = HOUSE_MEANINGS[houseNum-1] || keyCard.key;
+
+  let neighbors = null;
+  let knights = [];
+  if(currentGTType === "8x4"){
+    neighbors = getNeighbors8(currentGTKeyIndex);
+    knights = getKnights8(currentGTKeyIndex);
+  }else if(currentGTType === "9x4"){
+    neighbors = getNeighbors9(currentGTKeyIndex);
+    knights = getKnights9(currentGTKeyIndex);
+  }
+
+  function cardLine(label, card){
+    if(!card) return "";
+    const idx = currentGTDeck.indexOf(card);
+    const hNum = idx + 1;
+    const hText = HOUSE_MEANINGS[hNum-1] || card.key;
+    return `<li>${label} — <b>${card.kr} (${card.num})</b> / 하우스 ${hNum}: ${hText}</li>`;
+  }
+
+  let html = `
+<div class="box small">
+  <b>키카드 & 하우스</b><br>
+  키카드: <b>${keyCard.kr} (${keyCard.num})</b><br>
+  위치: <b>${currentGTType === "8x4" ? "8x4+4" : "9x4"} ${houseNum}번 하우스 (${keyCard.code})</b><br>
+  하우스 의미: ${houseText}
+</div>`;
+
+  if(neighbors){
     html += `
-  <p class="small">
-    키카드를 지정하지 않았다면, 사람 카드(28/29)가 있는 줄과 열을 기준으로 관계 흐름을 보고,
-    태양·별·열쇠·십자가 등의 위치를 중심으로 중요한 사건의 축을 잡아줍니다.
-  </p>
-</div>`;
-    return html;
-  }
-
-  const idx = order.findIndex(c => c.num === keyNum);
-  if(idx === -1){
-    html += `<p class="small">선택한 키카드를 배열에서 찾지 못했습니다.</p></div>`;
-    return html;
-  }
-
-  const keyCard = order[idx];
-  const row = Math.floor(idx / 9) + 1;
-  const col = (idx % 9) + 1;
-
-  function getCardAt(r,c){
-    if(r < 1 || r > 4 || c < 1 || c > 9) return null;
-    return order[(r-1)*9 + (c-1)];
-  }
-
-  const left   = getCardAt(row, col-1);
-  const right  = getCardAt(row, col+1);
-  const up     = getCardAt(row-1, col);
-  const down   = getCardAt(row+1, col);
-  const upLeft = getCardAt(row-1, col-1);
-  const upRight= getCardAt(row-1, col+1);
-  const dnLeft = getCardAt(row+1, col-1);
-  const dnRight= getCardAt(row+1, col+1);
-
-  html += `
+<div class="box small">
+  <b>주변 카드</b>
   <ul class="list">
-    <li>키카드 <b>${keyCard.kr} (${keyCard.num})</b>는 <b>${row}행 ${col}열</b>에 위치합니다.</li>
-    <li>같은 줄(${row}행)의 왼쪽 카드들은 <b>과거·이미 지나간 흐름</b>, 오른쪽 카드들은 <b>앞으로 전개될 상황</b>을 말합니다.</li>
-    <li>키카드 위쪽(${row-1}행)은 <b>머릿속 생각·계획·이성적 판단</b>, 아래쪽(${row+1}행)은 <b>감정·몸의 반응·현실 결과</b>로 볼 수 있습니다.</li>
+    ${cardLine("왼쪽(과거/이미 지나간 영향)", neighbors.left)}
+    ${cardLine("오른쪽(다가올 일·결과)",       neighbors.right)}
+    ${cardLine("위(머릿속 생각·계획)",         neighbors.up)}
+    ${cardLine("아래(감정·현실 반응)",         neighbors.down)}
+    ${cardLine("왼쪽 위(과거의 생각·기억)",    neighbors.upLeft)}
+    ${cardLine("오른쪽 위(앞으로의 기대)",    neighbors.upRight)}
+    ${cardLine("왼쪽 아래(과거에서 남은 감정)",neighbors.downLeft)}
+    ${cardLine("오른쪽 아래(앞으로 남을 감정)",neighbors.downRight)}
   </ul>
-
-  <b>키카드 주변 카드 해석 예시</b>
-  <ul class="list">
-    ${left   ? `<li>왼쪽 (${left.kr}) : 과거의 계기·기반</li>` : ""}
-    ${right  ? `<li>오른쪽 (${right.kr}) : 곧 다가올 일·구체적인 전개</li>` : ""}
-    ${up     ? `<li>위 (${up.kr}) : 머리로 생각하는 바·의식적인 목표</li>` : ""}
-    ${down   ? `<li>아래 (${down.kr}) : 무의식·감정·실제 반응</li>` : ""}
-    ${upLeft ? `<li>왼쪽 위 (${upLeft.kr}) : 과거의 생각·머릿속에 남은 기억</li>` : ""}
-    ${upRight? `<li>오른쪽 위 (${upRight.kr}) : 앞으로 기대하는 일·희망</li>` : ""}
-    ${dnLeft ? `<li>왼쪽 아래 (${dnLeft.kr}) : 과거 사건이 남긴 감정·여파</li>` : ""}
-    ${dnRight? `<li>오른쪽 아래 (${dnRight.kr}) : 앞으로 감정적으로 어떤 영향이 남는지</li>` : ""}
-  </ul>
-
-  <p class="small">
-    실전에서는 키카드가 있는 줄을 중심으로 좌우를 “과거–현재–미래”의 한 문장으로 만들고,
-    위·아래·대각선 카드를 3카드 체인처럼 덧붙여서
-    “질문자가 어떻게 생각하고 느끼며, 앞으로 무엇을 경험할지”를 정리해 주면 자연스럽게 그랑타블로 리딩이 완성됩니다.
-  </p>
 </div>`;
+  }
 
-  return html;
+  if(knights && knights.length){
+    html += `
+<div class="box small">
+  <b>나이팅 카드 (기사 이동)</b>
+  <ul class="list">`;
+    knights.forEach(card=>{
+      const idx = currentGTDeck.indexOf(card);
+      const hNum = idx + 1;
+      const hText = HOUSE_MEANINGS[hNum-1] || card.key;
+      html += `<li><b>${card.kr} (${card.num})</b> / 하우스 ${hNum}: ${hText} — 키카드의 <b>숨은 동기·간접 영향</b>을 보여줍니다.</li>`;
+    });
+    html += `</ul>
+  <p class="small">나이팅 카드는 직접적으로 붙어 있지 않지만,  
+  키카드와 강하게 엮여 있는 “물밑 영향·보이지 않는 사정”을 읽을 때 활용합니다.</p>
+</div>`;
+  }
+
+  detail.innerHTML = html;
 }
 
 /* 메인 스테이지 */
@@ -738,6 +887,10 @@ const stage = document.getElementById("stage");
 /* N장 (1,2,3,5) */
 function drawN(n,btn){
   setOn(btn);
+  currentGTType = null;
+  currentGTDeck = null;
+  currentGTKeyIndex = null;
+
   const pick = shuffle([...CARDS]).slice(0,n);
   stage.innerHTML = "";
   stage.insertAdjacentHTML("beforeend", questionHTML());
@@ -768,6 +921,10 @@ function drawN(n,btn){
 /* 십자 스프레드 */
 function drawCross(btn){
   setOn(btn);
+  currentGTType = null;
+  currentGTDeck = null;
+  currentGTKeyIndex = null;
+
   const cs = shuffle([...CARDS]).slice(0,5);
   stage.innerHTML = "";
   stage.insertAdjacentHTML("beforeend", questionHTML());
@@ -791,6 +948,10 @@ function drawCross(btn){
 /* 3x3 9카드 */
 function draw3x3(btn){
   setOn(btn);
+  currentGTType = null;
+  currentGTDeck = null;
+  currentGTKeyIndex = null;
+
   stage.innerHTML = "";
   stage.insertAdjacentHTML("beforeend", questionHTML());
 
@@ -843,9 +1004,17 @@ function draw3x3(btn){
 /* 그랑타블로 8x4+4 */
 function drawGT8x4(btn){
   setOn(btn);
-  const deck = shuffle([...CARDS]); // 36장 전체 사용
+  const deck = shuffle([...CARDS]); // 36장 전체
+  currentGTType = "8x4";
+  currentGTDeck = deck;
+  currentGTKeyIndex = null;
+
   const sel = document.getElementById("center-select");
-  const keyVal = sel && sel.value ? parseInt(sel.value,10) : null;
+  if(sel && sel.value){
+    const keyVal = parseInt(sel.value,10);
+    const idx = deck.findIndex(c => c.num === keyVal);
+    if(idx !== -1) currentGTKeyIndex = idx;
+  }
 
   stage.innerHTML = "";
   stage.insertAdjacentHTML("beforeend", questionHTML());
@@ -857,9 +1026,12 @@ function drawGT8x4(btn){
     const rowDiv = document.createElement("div");
     rowDiv.className = "gt8-row";
     for(let c=0;c<8;c++){
-      const card = deck[r*8 + c];
-      const isKey = keyVal && card.num === keyVal;
-      rowDiv.appendChild(makeTile(card,null,false,isKey ? "keycard" : ""));
+      const i = r*8 + c;
+      const card = deck[i];
+      const isKey = currentGTKeyIndex === i;
+      const tile = makeTile(card, ()=>setGTKey(i), false, isKey ? "keycard" : "");
+      tile.dataset.gtIdx = i;
+      rowDiv.appendChild(tile);
     }
     wrap.appendChild(rowDiv);
   }
@@ -869,8 +1041,10 @@ function drawGT8x4(btn){
   bottom.className = "gt8-bottom";
   for(let i=32;i<36;i++){
     const card = deck[i];
-    const isKey = keyVal && card.num === keyVal;
-    bottom.appendChild(makeTile(card,null,false,isKey ? "keycard" : ""));
+    const isKey = currentGTKeyIndex === i;
+    const tile = makeTile(card, ()=>setGTKey(i), false, isKey ? "keycard" : "");
+    tile.dataset.gtIdx = i;
+    bottom.appendChild(tile);
   }
   wrap.appendChild(bottom);
   stage.appendChild(wrap);
@@ -882,15 +1056,28 @@ function drawGT8x4(btn){
     `해석: ${sum.interp}<br>`+
     `권고: ${sum.advice}</div>`
   );
-  stage.insertAdjacentHTML("beforeend", interpretGT8x4(deck,keyVal));
+  stage.insertAdjacentHTML("beforeend", interpretGT8x4(deck));
+
+  const detail = document.createElement("div");
+  detail.id = "gt-detail";
+  stage.appendChild(detail);
+  renderGTDetail();
 }
 
 /* 그랑타블로 9x4 */
 function drawGT9x4(btn){
   setOn(btn);
-  const deck = shuffle([...CARDS]); // 36장 전체
+  const deck = shuffle([...CARDS]);
+  currentGTType = "9x4";
+  currentGTDeck = deck;
+  currentGTKeyIndex = null;
+
   const sel = document.getElementById("center-select");
-  const keyVal = sel && sel.value ? parseInt(sel.value,10) : null;
+  if(sel && sel.value){
+    const keyVal = parseInt(sel.value,10);
+    const idx = deck.findIndex(c => c.num === keyVal);
+    if(idx !== -1) currentGTKeyIndex = idx;
+  }
 
   stage.innerHTML = "";
   stage.insertAdjacentHTML("beforeend", questionHTML());
@@ -900,8 +1087,10 @@ function drawGT9x4(btn){
 
   for(let i=0;i<36;i++){
     const card = deck[i];
-    const isKey = keyVal && card.num === keyVal;
-    grid.appendChild(makeTile(card,null,false,isKey ? "keycard" : ""));
+    const isKey = currentGTKeyIndex === i;
+    const tile = makeTile(card, ()=>setGTKey(i), false, isKey ? "keycard" : "");
+    tile.dataset.gtIdx = i;
+    grid.appendChild(tile);
   }
   stage.appendChild(grid);
 
@@ -912,7 +1101,12 @@ function drawGT9x4(btn){
     `해석: ${sum.interp}<br>`+
     `권고: ${sum.advice}</div>`
   );
-  stage.insertAdjacentHTML("beforeend", interpretGT9x4(deck,keyVal));
+  stage.insertAdjacentHTML("beforeend", interpretGT9x4(deck));
+
+  const detail = document.createElement("div");
+  detail.id = "gt-detail";
+  stage.appendChild(detail);
+  renderGTDetail();
 }
 
 /* 🔄 초기화 */
@@ -925,6 +1119,10 @@ function resetAll(){
   if(qCheck) qCheck.checked = false;
   const sel = document.getElementById("center-select");
   if(sel) sel.value = "";
+
+  currentGTType = null;
+  currentGTDeck = null;
+  currentGTKeyIndex = null;
 }
 
 /* 🔐 비밀번호 잠금 */
