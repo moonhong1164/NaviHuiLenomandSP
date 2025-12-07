@@ -131,6 +131,11 @@
   .tone.neu{background:#e7ffe8;}
   .tone.neg{background:#ffe7e7;}
 
+  /* 키카드 하이라이트 */
+  .keycard .card{
+    box-shadow:0 0 0 3px #a855f7, 0 0 16px rgba(168,85,247,.5);
+  }
+
   /* 1/2/3카드: 가로 줄 */
   .row{
     display:flex;
@@ -169,6 +174,28 @@
     justify-items:center;
   }
 
+  /* 그랑타블로 8x4+4 */
+  .gt8-row,
+  .gt8-bottom{
+    display:flex;
+    gap:6px;
+    justify-content:center;
+    align-items:flex-start;
+    flex-wrap:nowrap;
+    margin-top:4px;
+  }
+  .gt8-bottom{margin-top:10px;}
+
+  /* 그랑타블로 9x4 */
+  .gt9-grid{
+    display:grid;
+    grid-template-columns:repeat(9,minmax(0,1fr));
+    gap:6px;
+    max-width:900px;
+    margin:0 auto;
+    justify-items:center;
+  }
+
   .box{
     margin-top:14px;
     padding:12px;
@@ -193,11 +220,23 @@
     .spread-5 .caption{
       font-size:11px;
     }
+
+    .gt8-row .card,
+    .gt8-bottom .card,
+    .gt9-grid .card{
+      width:80px;
+    }
   }
   @media (max-width:480px){
     .card{width:90px;}
     .cross .card{max-width:120px;}
     .spread-5 .card{width:16vw;}
+
+    .gt8-row .card,
+    .gt8-bottom .card,
+    .gt9-grid .card{
+      width:70px;
+    }
   }
 </style>
 </head>
@@ -218,7 +257,7 @@
   </div>
 </div>
 
-<!-- 🔒 실제 페이지 내용 (비밀번호 통과 후에만 보이게) -->
+<!-- 🔒 실제 페이지 내용 -->
 <div id="app" style="display:none;">
   <div class="wrap">
     <h1>NAVI&HUI LENORMAND</h1>
@@ -229,9 +268,9 @@
         <input id="qtext" type="text" placeholder="질문을 적어 주세요" />
       </div>
 
-      <!-- 중앙 카드 선택 -->
+      <!-- 중앙 카드 / 키카드 선택 -->
       <div class="center-opt">
-        <span>중앙카드</span>
+        <span>키카드</span>
         <select id="center-select">
           <option value="">랜덤</option>
         </select>
@@ -243,6 +282,8 @@
       <button class="btn" onclick="drawN(5,this)">5카드</button>
       <button class="btn" onclick="drawCross(this)">+ 십자</button>
       <button class="btn" onclick="draw3x3(this)">9카드(3x3)</button>
+      <button class="btn" onclick="drawGT8x4(this)">그랑타블로 8x4+4</button>
+      <button class="btn" onclick="drawGT9x4(this)">그랑타블로 9x4</button>
       <button class="btn btn-reset" onclick="resetAll()">초기화</button>
     </div>
 
@@ -251,7 +292,7 @@
 </div>
 
 <script>
-/* 🖱 오른쪽 클릭(컨텍스트 메뉴) 방지 */
+/* 🖱 오른쪽 클릭 방지 */
 document.addEventListener("contextmenu", function(e){
   e.preventDefault();
 });
@@ -296,7 +337,7 @@ const CARDS = [
   {num:36,code:"Cross",   kr:"십자가", key:"고난•신념",   add:"책임·버티기",       type:"positive"},
 ];
 
-/* 중앙 카드 선택 셀렉트 초기화 */
+/* 키카드 셀렉트 초기화 */
 function initCenterSelect(){
   const sel = document.getElementById("center-select");
   if(!sel) return;
@@ -340,9 +381,9 @@ function toneBadge(type){
   return '<span class="tone neu">🟢 중립</span>';
 }
 
-function makeTile(card, onClick=null, showCaption=true){
+function makeTile(card, onClick=null, showCaption=true, extraClass=""){
   const root = document.createElement("div");
-  root.className = "item";
+  root.className = "item" + (extraClass ? " "+extraClass : "");
 
   const cardDiv = document.createElement("div");
   cardDiv.className = "card";
@@ -411,7 +452,7 @@ function chainSentence(a,b){
   return `「${a.kr} + ${b.kr}」 체인: ${a.key} 위에 ${b.key}가 이어지며, ${a.add} 흐름 속에 ${b.add}가 더해지는 조합입니다.`;
 }
 
-/* 1/2/3/5카드 해석 박스 */
+/* 1/2/3/5카드 해석 */
 function interpretN(n,cards){
   if(!cards || !cards.length) return "";
 
@@ -539,7 +580,7 @@ function interpret3x3(order){
   return `
 <div class="box small">
   <b>3x3 9카드 해석 가이드</b><br>
-  중앙 카드 <b>${c5.kr}</b>가 이번 리딩의 <b>중심 테마</b>입니다.${hasSignificator ? " (중앙 카드를 직접 선택했다면, 작은 그랑 타블로처럼 <b>표지자/주제 카드</b>로 사용합니다.)" : ""}
+  중앙 카드 <b>${c5.kr}</b>가 이번 리딩의 <b>중심 테마</b>입니다.${hasSignificator ? " (키카드를 선택했다면, 작은 그랑 타블로처럼 <b>표지자/주제 카드</b>로 사용합니다.)" : ""}
 
   <ul class="list">
     <li><b>1–2–3 (${topRowNames})</b> : 생각·의식의 영역 — 동기, 계획, 머릿속 걱정</li>
@@ -562,10 +603,139 @@ function interpret3x3(order){
 </div>`;
 }
 
+/* 그랑타블로 8x4+4 해석 */
+function interpretGT8x4(order, keyNum){
+  let html = `
+<div class="box small">
+  <b>그랑타블로 8x4+4 해석 가이드</b>
+  <ul class="list">
+    <li>36장을 모두 사용하는 대형 스프레드입니다.</li>
+    <li>위에서부터 네 줄(각 8장)은 <b>현재·주변 환경·중·장기적 흐름</b>을, 맨 아래 4장은 <b>운명/총정리 라인</b>으로 봅니다.</li>
+    <li>가로줄, 세로줄, 대각선, 기사 이동(두 칸+한 칸) 등으로 세부 흐름을 읽을 수 있습니다.</li>
+  </ul>
+`;
+
+  if(!keyNum){
+    html += `
+  <p class="small">
+    키카드를 지정하지 않은 경우에는, 각 줄과 카드 뭉치를 중심으로 전체 분위기·과거와 미래의 축을 나누어 읽습니다.
+    사람 카드(28/29)가 어디에 있는지, 태양·별·열쇠·십자가 등 강한 카드가 어느 줄에 모여 있는지도 함께 살펴보면 좋습니다.
+  </p>
+</div>`;
+    return html;
+  }
+
+  const idx = order.findIndex(c => c.num === keyNum);
+  if(idx === -1){
+    html += `<p class="small">선택한 키카드를 배열에서 찾지 못했습니다. (정상 배치라면 36장 안에 반드시 포함됩니다.)</p></div>`;
+    return html;
+  }
+
+  const keyCard = order[idx];
+  const house = idx + 1;
+  let zone = "";
+  if(house <= 8) zone = "1행 — 겉으로 보이는 현재 상황·외부 환경";
+  else if(house <= 16) zone = "2행 — 가까운 미래, 주변 사람들의 영향";
+  else if(house <= 24) zone = "3행 — 중·장기 흐름, 내면과 현실을 잇는 영역";
+  else if(house <= 32) zone = "4행 — 결과·정리 단계, 이야기가 어디로 귀결되는지";
+  else zone = "맨 아래 4장 — 운명/총정리 라인, 전체 리딩의 결론";
+
+  html += `
+  <ul class="list">
+    <li>키카드 <b>${keyCard.kr} (${keyCard.num})</b>는 <b>${house}번 하우스</b>, <b>${zone}</b>에 위치합니다.</li>
+    <li>키카드 기준 왼쪽 카드들은 <b>이미 지나간 일·과거의 영향</b>을, 오른쪽 카드들은 <b>앞으로 들어올 상황·미래</b>를 보여줍니다.</li>
+    <li>키카드 위쪽 줄은 <b>머리·의식·계획</b>, 아래쪽 줄은 <b>감정·현실적인 결과·몸의 반응</b>으로 볼 수 있습니다.</li>
+  </ul>
+  <p class="small">
+    실전에서는 키카드를 중심으로 가로줄(과거→미래), 세로줄(위→아래), 대각선, 가까이 모여 있는 카드 뭉치를
+    3카드 체인처럼 이어서 문장으로 만들면 됩니다.  
+    예를 들어 “왼쪽 두 장은 과거의 계기, 오른쪽 두 장은 앞으로의 전개, 키카드 바로 위/아래는
+    이 상황에 대한 머리와 마음의 반응”처럼 구분해 읽어 주세요.
+  </p>
+</div>`;
+
+  return html;
+}
+
+/* 그랑타블로 9x4 해석 */
+function interpretGT9x4(order, keyNum){
+  let html = `
+<div class="box small">
+  <b>그랑타블로 9x4 해석 가이드</b>
+  <ul class="list">
+    <li>4행×9열로 36장을 모두 펼치는 스프레드입니다.</li>
+    <li>상단 두 줄은 <b>현재·가까운 미래</b>, 하단 두 줄은 <b>중·장기 전망·깊은 무의식</b>으로 보는 경우가 많습니다.</li>
+    <li>세로열은 주제별(관계·일·재정·내면 등) 흐름을, 가로줄은 시간의 흐름(과거→미래)으로 읽을 수 있습니다.</li>
+  </ul>
+`;
+
+  if(!keyNum){
+    html += `
+  <p class="small">
+    키카드를 지정하지 않았다면, 사람 카드(28/29)가 있는 줄과 열을 기준으로 관계 흐름을 보고,
+    태양·별·열쇠·십자가 등의 위치를 중심으로 중요한 사건의 축을 잡아줍니다.
+  </p>
+</div>`;
+    return html;
+  }
+
+  const idx = order.findIndex(c => c.num === keyNum);
+  if(idx === -1){
+    html += `<p class="small">선택한 키카드를 배열에서 찾지 못했습니다.</p></div>`;
+    return html;
+  }
+
+  const keyCard = order[idx];
+  const row = Math.floor(idx / 9) + 1;
+  const col = (idx % 9) + 1;
+
+  function getCardAt(r,c){
+    if(r < 1 || r > 4 || c < 1 || c > 9) return null;
+    return order[(r-1)*9 + (c-1)];
+  }
+
+  const left   = getCardAt(row, col-1);
+  const right  = getCardAt(row, col+1);
+  const up     = getCardAt(row-1, col);
+  const down   = getCardAt(row+1, col);
+  const upLeft = getCardAt(row-1, col-1);
+  const upRight= getCardAt(row-1, col+1);
+  const dnLeft = getCardAt(row+1, col-1);
+  const dnRight= getCardAt(row+1, col+1);
+
+  html += `
+  <ul class="list">
+    <li>키카드 <b>${keyCard.kr} (${keyCard.num})</b>는 <b>${row}행 ${col}열</b>에 위치합니다.</li>
+    <li>같은 줄(${row}행)의 왼쪽 카드들은 <b>과거·이미 지나간 흐름</b>, 오른쪽 카드들은 <b>앞으로 전개될 상황</b>을 말합니다.</li>
+    <li>키카드 위쪽(${row-1}행)은 <b>머릿속 생각·계획·이성적 판단</b>, 아래쪽(${row+1}행)은 <b>감정·몸의 반응·현실 결과</b>로 볼 수 있습니다.</li>
+  </ul>
+
+  <b>키카드 주변 카드 해석 예시</b>
+  <ul class="list">
+    ${left   ? `<li>왼쪽 (${left.kr}) : 과거의 계기·기반</li>` : ""}
+    ${right  ? `<li>오른쪽 (${right.kr}) : 곧 다가올 일·구체적인 전개</li>` : ""}
+    ${up     ? `<li>위 (${up.kr}) : 머리로 생각하는 바·의식적인 목표</li>` : ""}
+    ${down   ? `<li>아래 (${down.kr}) : 무의식·감정·실제 반응</li>` : ""}
+    ${upLeft ? `<li>왼쪽 위 (${upLeft.kr}) : 과거의 생각·머릿속에 남은 기억</li>` : ""}
+    ${upRight? `<li>오른쪽 위 (${upRight.kr}) : 앞으로 기대하는 일·희망</li>` : ""}
+    ${dnLeft ? `<li>왼쪽 아래 (${dnLeft.kr}) : 과거 사건이 남긴 감정·여파</li>` : ""}
+    ${dnRight? `<li>오른쪽 아래 (${dnRight.kr}) : 앞으로 감정적으로 어떤 영향이 남는지</li>` : ""}
+  </ul>
+
+  <p class="small">
+    실전에서는 키카드가 있는 줄을 중심으로 좌우를 “과거–현재–미래”의 한 문장으로 만들고,
+    위·아래·대각선 카드를 3카드 체인처럼 덧붙여서
+    “질문자가 어떻게 생각하고 느끼며, 앞으로 무엇을 경험할지”를 정리해 주면 자연스럽게 그랑타블로 리딩이 완성됩니다.
+  </p>
+</div>`;
+
+  return html;
+}
+
 /* 메인 스테이지 */
 const stage = document.getElementById("stage");
 
-/* N장 뽑기 (1,2,3,5) */
+/* N장 (1,2,3,5) */
 function drawN(n,btn){
   setOn(btn);
   const pick = shuffle([...CARDS]).slice(0,n);
@@ -618,7 +788,7 @@ function drawCross(btn){
   stage.insertAdjacentHTML("beforeend", interpretCross(cs));
 }
 
-/* 3x3 9카드 스프레드 (중앙 카드 선택 가능) */
+/* 3x3 9카드 */
 function draw3x3(btn){
   setOn(btn);
   stage.innerHTML = "";
@@ -670,12 +840,85 @@ function draw3x3(btn){
   stage.insertAdjacentHTML("beforeend", interpret3x3(order));
 }
 
-/* 🔄 초기화 기능 */
+/* 그랑타블로 8x4+4 */
+function drawGT8x4(btn){
+  setOn(btn);
+  const deck = shuffle([...CARDS]); // 36장 전체 사용
+  const sel = document.getElementById("center-select");
+  const keyVal = sel && sel.value ? parseInt(sel.value,10) : null;
+
+  stage.innerHTML = "";
+  stage.insertAdjacentHTML("beforeend", questionHTML());
+
+  const wrap = document.createElement("div");
+
+  // 위 4줄 (8장씩)
+  for(let r=0;r<4;r++){
+    const rowDiv = document.createElement("div");
+    rowDiv.className = "gt8-row";
+    for(let c=0;c<8;c++){
+      const card = deck[r*8 + c];
+      const isKey = keyVal && card.num === keyVal;
+      rowDiv.appendChild(makeTile(card,null,false,isKey ? "keycard" : ""));
+    }
+    wrap.appendChild(rowDiv);
+  }
+
+  // 아래 4장
+  const bottom = document.createElement("div");
+  bottom.className = "gt8-bottom";
+  for(let i=32;i<36;i++){
+    const card = deck[i];
+    const isKey = keyVal && card.num === keyVal;
+    bottom.appendChild(makeTile(card,null,false,isKey ? "keycard" : ""));
+  }
+  wrap.appendChild(bottom);
+  stage.appendChild(wrap);
+
+  const sum = summarize(deck);
+  stage.insertAdjacentHTML("beforeend",
+    `<div class="box small"><b>그랑타블로 8x4+4 톤 요약</b><br>`+
+    `전체 톤: ${sum.toneTxt}<br>`+
+    `해석: ${sum.interp}<br>`+
+    `권고: ${sum.advice}</div>`
+  );
+  stage.insertAdjacentHTML("beforeend", interpretGT8x4(deck,keyVal));
+}
+
+/* 그랑타블로 9x4 */
+function drawGT9x4(btn){
+  setOn(btn);
+  const deck = shuffle([...CARDS]); // 36장 전체
+  const sel = document.getElementById("center-select");
+  const keyVal = sel && sel.value ? parseInt(sel.value,10) : null;
+
+  stage.innerHTML = "";
+  stage.insertAdjacentHTML("beforeend", questionHTML());
+
+  const grid = document.createElement("div");
+  grid.className = "gt9-grid";
+
+  for(let i=0;i<36;i++){
+    const card = deck[i];
+    const isKey = keyVal && card.num === keyVal;
+    grid.appendChild(makeTile(card,null,false,isKey ? "keycard" : ""));
+  }
+  stage.appendChild(grid);
+
+  const sum = summarize(deck);
+  stage.insertAdjacentHTML("beforeend",
+    `<div class="box small"><b>그랑타블로 9x4 톤 요약</b><br>`+
+    `전체 톤: ${sum.toneTxt}<br>`+
+    `해석: ${sum.interp}<br>`+
+    `권고: ${sum.advice}</div>`
+  );
+  stage.insertAdjacentHTML("beforeend", interpretGT9x4(deck,keyVal));
+}
+
+/* 🔄 초기화 */
 function resetAll(){
   setOn(null);
-  if(stage){
-    stage.innerHTML = "";
-  }
+  if(stage) stage.innerHTML = "";
   const qInput = document.getElementById("qtext");
   const qCheck = document.getElementById("useQ");
   if(qInput) qInput.value = "";
